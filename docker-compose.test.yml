@@ -1,0 +1,30 @@
+services:
+  mock-botapi:
+    image: oven/bun:1-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: bun run tests/mock-botapi/index.ts
+    environment:
+      PORT: "8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/_test/sent"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+  test-runner:
+    image: oven/bun:1-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: bun run tests/runner.ts
+    environment:
+      TELEGRAM_BOT_TOKEN: "test:mocktoken"
+      TELEGRAM_API_BASE: "http://mock-botapi:8080"
+      MCP_BIN: "bun"
+      MCP_ARGS: "run src/index.ts"
+      MOCK_BOTAPI_URL: "http://mock-botapi:8080"
+    depends_on:
+      mock-botapi:
+        condition: service_healthy

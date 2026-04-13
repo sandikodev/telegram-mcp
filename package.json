@@ -10,8 +10,16 @@
   "author": "Sandikodev",
   "license": "MIT",
   "keywords": [
-    "mcp", "telegram", "model-context-protocol", "bun", "typescript",
-    "gramjs", "ai-tools", "ai-agent", "mtproto", "llm-tools"
+    "mcp",
+    "telegram",
+    "model-context-protocol",
+    "bun",
+    "typescript",
+    "gramjs",
+    "ai-tools",
+    "ai-agent",
+    "mtproto",
+    "llm-tools"
   ],
   "type": "module",
   "bin": {
@@ -27,7 +35,11 @@
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "auth": "bun run src/auth.ts",
-    "prepublishOnly": "bun run --check src/index.ts"
+    "test": "bun test tests/config.test.ts tests/schemas.test.ts tests/botapi.test.ts",
+    "test:integration": "docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-runner",
+    "test:integration:clean": "docker compose -f docker-compose.test.yml down --volumes --remove-orphans",
+    "prepare": "husky",
+    "prepublishOnly": "bun test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -35,7 +47,8 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "husky": "^9.1.7"
   },
   "trustedDependencies": [
     "es5-ext"
