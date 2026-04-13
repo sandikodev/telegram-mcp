@@ -107,12 +107,14 @@ async function run() {
   console.log("\n📋 tools/list");
   const listRes = await mcp.call("tools/list", {}) as { result?: { tools: { name: string }[] } };
   const tools = listRes.result?.tools?.map((t) => t.name) ?? [];
-  assert("returns 5 tools", tools.length === 5, tools);
+  assert("returns 7 tools", tools.length === 7, tools);
   assert("includes telegram_send_message",    tools.includes("telegram_send_message"));
   assert("includes telegram_get_messages",    tools.includes("telegram_get_messages"));
   assert("includes telegram_send_document",   tools.includes("telegram_send_document"));
   assert("includes telegram_get_dialogs",     tools.includes("telegram_get_dialogs"));
   assert("includes telegram_get_topics",      tools.includes("telegram_get_topics"));
+  assert("includes telegram_search_messages", tools.includes("telegram_search_messages"));
+  assert("includes telegram_get_chat_info",   tools.includes("telegram_get_chat_info"));
 
   // ── 2. telegram_get_messages ─────────────────────────────────────────────
   console.log("\n📨 telegram_get_messages");
@@ -167,6 +169,18 @@ async function run() {
     arguments: { chat_id: "-1001234567890" },
   }) as { result?: { isError?: boolean } };
   assert("get_topics returns isError in Bot API mode", topicsRes.result?.isError === true);
+
+  const searchRes = await mcp.call("tools/call", {
+    name: "telegram_search_messages",
+    arguments: { chat_id: "-1001234567890", query: "hello" },
+  }) as { result?: { isError?: boolean } };
+  assert("search_messages returns isError in Bot API mode", searchRes.result?.isError === true);
+
+  const chatInfoRes = await mcp.call("tools/call", {
+    name: "telegram_get_chat_info",
+    arguments: { chat_id: "-1001234567890" },
+  }) as { result?: { isError?: boolean } };
+  assert("get_chat_info returns isError in Bot API mode", chatInfoRes.result?.isError === true);
 
   // ── Done ─────────────────────────────────────────────────────────────────
   mcp.kill();

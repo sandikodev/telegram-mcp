@@ -11,7 +11,18 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Planned
 - HTTP transport option
 - Cloudflare Workers support (Bot API mode)
-- `telegram_search_messages` tool
+
+---
+
+## [2.0.0] — 2026-04-14
+
+### Added
+- `telegram_search_messages` — search messages by keyword in any chat (MTProto only)
+- `telegram_get_chat_info` — get metadata of a chat/group/channel (id, title, username, type, members, description)
+
+### Changed
+- Total tools: 5 → 7
+- Bumped version to 2.0.0
 
 ---
 

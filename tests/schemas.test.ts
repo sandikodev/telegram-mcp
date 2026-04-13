@@ -24,6 +24,16 @@ const SendDocumentSchema = z.object({
   caption: z.string().optional(),
 });
 
+const SearchMessagesSchema = z.object({
+  chat_id: z.union([z.string(), z.number()]),
+  query:   z.string().min(1),
+  limit:   z.number().min(1).max(100).default(20),
+});
+
+const GetChatInfoSchema = z.object({
+  chat_id: z.union([z.string(), z.number()]),
+});
+
 describe("tool schemas", () => {
   describe("GetMessagesSchema", () => {
     it("accepts string chat_id", () => {
@@ -70,6 +80,27 @@ describe("tool schemas", () => {
     });
     it("rejects missing file_path", () => {
       expect(() => SendDocumentSchema.parse({ chat_id: "x" })).toThrow();
+    });
+  });
+
+  describe("SearchMessagesSchema", () => {
+    it("accepts valid input", () => {
+      expect(() => SearchMessagesSchema.parse({ chat_id: "x", query: "hello" })).not.toThrow();
+    });
+    it("rejects empty query", () => {
+      expect(() => SearchMessagesSchema.parse({ chat_id: "x", query: "" })).toThrow();
+    });
+    it("defaults limit to 20", () => {
+      expect(SearchMessagesSchema.parse({ chat_id: "x", query: "hi" }).limit).toBe(20);
+    });
+  });
+
+  describe("GetChatInfoSchema", () => {
+    it("accepts string chat_id", () => {
+      expect(() => GetChatInfoSchema.parse({ chat_id: "@group" })).not.toThrow();
+    });
+    it("rejects missing chat_id", () => {
+      expect(() => GetChatInfoSchema.parse({})).toThrow();
     });
   });
 });

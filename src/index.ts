@@ -77,12 +77,22 @@ const GetTopicsSchema = z.object({
   chat_id: z.union([z.string(), z.number()]),
 });
 
+const SearchMessagesSchema = z.object({
+  chat_id: z.union([z.string(), z.number()]),
+  query:   z.string().min(1),
+  limit:   z.number().min(1).max(100).default(20),
+});
+
+const GetChatInfoSchema = z.object({
+  chat_id: z.union([z.string(), z.number()]),
+});
+
 // ---------------------------------------------------------------------------
 // MCP Server
 // ---------------------------------------------------------------------------
 
 const server = new Server(
-  { name: "telegram-mcp", version: "1.0.0" },
+  { name: "telegram-mcp", version: "2.0.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -152,6 +162,30 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ["chat_id"],
       },
     },
+    {
+      name: "telegram_search_messages",
+      description: "Search messages by keyword in a chat (MTProto only)",
+      inputSchema: {
+        type: "object",
+        properties: {
+          chat_id: { type: ["string","number"] },
+          query:   { type: "string", description: "Search keyword" },
+          limit:   { type: "number", description: "Number of results (1-100, default 20)" },
+        },
+        required: ["chat_id", "query"],
+      },
+    },
+    {
+      name: "telegram_get_chat_info",
+      description: "Get metadata of a chat, group, or channel",
+      inputSchema: {
+        type: "object",
+        properties: {
+          chat_id: { type: ["string","number"] },
+        },
+        required: ["chat_id"],
+      },
+    },
   ],
 }));
 
@@ -181,6 +215,8 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         }
         case "telegram_get_dialogs":
         case "telegram_get_topics":
+        case "telegram_search_messages":
+        case "telegram_get_chat_info":
           return { content: [{ type: "text", text: `${name} is only available in MTProto mode. Set TELEGRAM_API_ID and TELEGRAM_API_HASH.` }], isError: true };
         default:
           throw new Error(`Unknown tool: ${name}`);
@@ -252,6 +288,33 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           title:  t.title,
           closed: t.closed ?? false,
         }));
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case "telegram_search_messages": {
+        const { chat_id, query, limit } = SearchMessagesSchema.parse(args);
+        const messages = await client.getMessages(chat_id, { search: query, limit });
+        const result = messages.map((m) => ({
+          id:        m.id,
+          date:      new Date((m.date ?? 0) * 1000).toISOString(),
+          from:      (m.sender as any)?.username ?? (m.sender as any)?.firstName ?? "unknown",
+          text:      m.text ?? "",
+          has_media: !!m.media,
+        }));
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      }
+
+      case "telegram_get_chat_info": {
+        const { chat_id } = GetChatInfoSchema.parse(args);
+        const entity = await client.getEntity(chat_id) as any;
+        const result = {
+          id:          entity.id?.toString(),
+          title:       entity.title ?? `${entity.firstName ?? ""} ${entity.lastName ?? ""}`.trim(),
+          username:    entity.username ?? null,
+          type:        entity.className,
+          members:     entity.participantsCount ?? null,
+          description: entity.about ?? null,
+        };
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       }
 
