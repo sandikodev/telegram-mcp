@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>telegram-mcp — Telegram MCP Server</title>
+  <meta name="description" content="A Model Context Protocol server for Telegram. Read history, send messages, manage forum topics — powered by Bun, GramJS, and Zod." />
+  <meta property="og:title" content="telegram-mcp" />
+  <meta property="og:description" content="Full Telegram access for AI agents via MCP. Built with Bun + GramJS + Zod." />
+  <meta property="og:url" content="https://sandikodev.github.io/telegram-mcp" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #2f81f7;
+      --accent-hover: #58a6ff;
+      --green: #3fb950;
+      --purple: #bc8cff;
+      --orange: #ffa657;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--text); text-decoration: none; }
+    nav .logo span { color: var(--accent); }
+    nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; }
+    nav a:hover { color: var(--text); }
+    nav .spacer { flex: 1; }
+    nav .gh-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    nav .gh-btn:hover { border-color: var(--accent); }
+
+    /* HERO */
+    .hero {
+      max-width: 860px;
+      margin: 5rem auto 3rem;
+      padding: 0 2rem;
+      text-align: center;
+    }
+    .hero .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(47,129,247,0.1);
+      border: 1px solid rgba(47,129,247,0.3);
+      color: var(--accent-hover);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero h1 span { color: var(--accent); -webkit-text-fill-color: var(--accent); }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+    .hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 0.7rem 1.6rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.7rem 1.6rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .btn-secondary:hover { border-color: var(--accent); }
+
+    /* BADGES */
+    .badges { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
+    .badges img { height: 20px; }
+
+    /* CODE BLOCK */
+    .code-section {
+      max-width: 860px;
+      margin: 3rem auto;
+      padding: 0 2rem;
+    }
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .code-block .code-header {
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .code-block pre {
+      padding: 1.2rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+    .code-block .c { color: var(--muted); }
+    .code-block .k { color: var(--purple); }
+    .code-block .s { color: var(--orange); }
+    .code-block .v { color: var(--green); }
+
+    /* TOOLS */
+    .tools-section {
+      max-width: 860px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .section-sub { color: var(--muted); margin-bottom: 2rem; }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+      transition: border-color 0.2s;
+    }
+    .tool-card:hover { border-color: var(--accent); }
+    .tool-card .tool-name {
+      font-family: 'SF Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--accent-hover);
+      margin-bottom: 0.5rem;
+    }
+    .tool-card p { font-size: 0.9rem; color: var(--muted); }
+
+    /* WHY */
+    .why-section {
+      max-width: 860px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .why-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.2rem;
+    }
+    .why-card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .why-card h3 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .why-card p { font-size: 0.85rem; color: var(--muted); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 4rem;
+    }
+    footer a { color: var(--accent-hover); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">telegram<span>-mcp</span></a>
+  <span class="spacer"></span>
+  <a href="#tools">Tools</a>
+  <a href="#setup">Setup</a>
+  <a href="https://github.com/sandikodev/telegram-mcp/blob/main/CONTRIBUTING.md">Contributing</a>
+  <a href="https://github.com/sandikodev/telegram-mcp" class="gh-btn">
+    ★ GitHub
+  </a>
+</nav>
+
+<section class="hero">
+  <div class="badge">⚡ Powered by Bun + GramJS + MCP</div>
+  <h1>Full Telegram Access<br>for <span>AI Agents</span></h1>
+  <p>
+    A Model Context Protocol server that gives AI agents complete access to your Telegram workspace —
+    read history, send messages, manage forum topics, and more.
+    No Bot API limitations.
+  </p>
+  <div class="hero-btns">
+    <a href="https://github.com/sandikodev/telegram-mcp" class="btn-primary">Get Started →</a>
+    <a href="#tools" class="btn-secondary">View Tools</a>
+  </div>
+  <div class="badges">
+    <img src="https://img.shields.io/badge/Bun-%3E%3D1.0-black?logo=bun" alt="Bun">
+    <img src="https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript" alt="TypeScript">
+    <img src="https://img.shields.io/badge/MCP-compatible-green" alt="MCP">
+    <img src="https://img.shields.io/badge/license-MIT-orange" alt="MIT">
+  </div>
+</section>
+
+<section class="code-section" id="setup">
+  <div class="code-block">
+    <div class="code-header">📦 Quick Setup</div>
+    <pre><span class="c"># 1. Clone & install</span>
+git clone https://github.com/sandikodev/telegram-mcp.git
+cd telegram-mcp && bun install
+
+<span class="c"># 2. Authenticate (one-time)</span>
+bun run auth
+
+<span class="c"># 3. Add to Kiro CLI (~/.kiro/settings/mcp.json)</span>
+{
+  <span class="s">"mcpServers"</span>: {
+    <span class="s">"telegram"</span>: {
+      <span class="s">"command"</span>: <span class="v">"bun"</span>,
+      <span class="s">"args"</span>: [<span class="v">"run"</span>, <span class="v">"/path/to/telegram-mcp/src/index.ts"</span>]
+    }
+  }
+}</pre>
+  </div>
+</section>
+
+<section class="tools-section" id="tools">
+  <div class="section-title">5 Powerful Tools</div>
+  <div class="section-sub">Everything your AI agent needs to work with Telegram</div>
+  <div class="tools-grid">
+    <div class="tool-card">
+      <div class="tool-name">telegram_get_messages</div>
+      <p>Read message history from any chat or forum topic — including private groups</p>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">telegram_send_message</div>
+      <p>Send formatted messages to any chat or forum topic with Markdown support</p>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">telegram_send_document</div>
+      <p>Upload and send any file — PDFs, CSVs, images — to any chat or topic</p>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">telegram_get_dialogs</div>
+      <p>List all your chats, groups, and channels with unread counts</p>
+    </div>
+    <div class="tool-card">
+      <div class="tool-name">telegram_get_topics</div>
+      <p>List all forum topics in a supergroup — perfect for organized workspaces</p>
+    </div>
+  </div>
+</section>
+
+<section class="why-section">
+  <div class="section-title">Why telegram-mcp?</div>
+  <div class="section-sub">The Bot API is limited. MTProto is not.</div>
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="icon">📜</div>
+      <h3>Full History Access</h3>
+      <p>Read any message from any chat — not just new ones</p>
+    </div>
+    <div class="why-card">
+      <div class="icon">🏷️</div>
+      <h3>Forum Topics</h3>
+      <p>Read and write to specific topics in supergroups</p>
+    </div>
+    <div class="why-card">
+      <div class="icon">⚡</div>
+      <h3>Bun Native</h3>
+      <p>Fast startup, TypeScript first, no transpilation needed</p>
+    </div>
+    <div class="why-card">
+      <div class="icon">🛡️</div>
+      <h3>Zod Validated</h3>
+      <p>All tool inputs validated — no runtime surprises</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Built by <a href="https://github.com/sandikodev">Sandikodev</a> ·
+  <a href="https://github.com/sandikodev/telegram-mcp">GitHub</a> ·
+  <a href="https://github.com/sandikodev/telegram-mcp/blob/main/CONTRIBUTING.md">Contribute</a> ·
+  MIT License
+</footer>
+
+</body>
+</html>
