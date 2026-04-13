@@ -1,35 +1,44 @@
 # telegram-mcp
 
-> A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server for Telegram — read message history, send messages, manage forum topics, and more. Built with **Bun**, **GramJS** (MTProto), and **Zod**.
+> A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server for Telegram.  
+> Read history, send messages, manage forum topics — powered by **Bun**, **GramJS** (MTProto), and **Zod**.
 
+[![Tests](https://github.com/sandikodev/telegram-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/sandikodev/telegram-mcp/actions)
 [![Bun](https://img.shields.io/badge/Bun-%3E%3D1.0-black?logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?logo=typescript)](https://typescriptlang.org)
 [![MCP](https://img.shields.io/badge/MCP-compatible-green)](https://modelcontextprotocol.io)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
-## Why?
+**Read this in other languages:**
+[Bahasa Indonesia](docs/id/README.md) · [中文](docs/zh/README.md) · [日本語](docs/ja/README.md) · [العربية](docs/ar/README.md)
 
-The official Telegram Bot API is limited — it cannot read message history, list dialogs, or access forum topics retroactively. This MCP server uses the **MTProto client API** (via GramJS) with your own Telegram account, giving AI agents full access to your Telegram workspace.
+---
+
+## Why telegram-mcp?
+
+The Telegram Bot API is limited — it cannot read message history, access private groups retroactively, or manage forum topics fully. This server uses the **MTProto client API** (via GramJS) with your own Telegram account, giving AI agents complete access to your Telegram workspace.
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
-| `telegram_get_messages` | Read message history from any chat or forum topic |
-| `telegram_send_message` | Send a message to any chat or forum topic |
-| `telegram_send_document` | Send a file to any chat or forum topic |
-| `telegram_get_dialogs` | List all chats, groups, and channels |
-| `telegram_get_topics` | List forum topics in a supergroup |
+| Tool | Description | Mode |
+|------|-------------|------|
+| `telegram_get_messages` | Read message history from any chat or forum topic | MTProto |
+| `telegram_send_message` | Send Markdown/HTML messages to any chat or topic | Both |
+| `telegram_send_document` | Send files to any chat or topic | Both |
+| `telegram_get_dialogs` | List all chats, groups, and channels | MTProto |
+| `telegram_get_topics` | List forum topics in a supergroup | MTProto |
 
 ## Requirements
 
-- [Bun](https://bun.sh) >= 1.0
-- Telegram account
-- `api_id` and `api_hash` from [my.telegram.org](https://my.telegram.org)
+| Component | Minimum Version |
+|-----------|----------------|
+| [Bun](https://bun.sh) | 1.0 |
+| Telegram account | — |
+| `api_id` + `api_hash` | from [my.telegram.org](https://my.telegram.org) |
 
-## Setup
+## Quick Start
 
-### 1. Clone & install
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/sandikodev/telegram-mcp.git
@@ -37,32 +46,30 @@ cd telegram-mcp
 bun install
 ```
 
-### 2. Authenticate
+### 2. Authenticate (one-time)
 
 ```bash
 bun run auth
 ```
 
-This will prompt for your `api_id`, `api_hash`, phone number, and OTP. The session is saved to `~/.config/telegram-mcp/session.txt`.
+You will be prompted for your `api_id`, `api_hash`, phone number, and OTP code.  
+The session string is saved to `~/.config/telegram-mcp/session.txt`.
 
-### 3. Add to your MCP client
+### 3. Configure your MCP client
 
 **Kiro CLI** (`~/.kiro/settings/mcp.json`):
-
 ```json
 {
   "mcpServers": {
     "telegram": {
       "command": "/path/to/.bun/bin/bun",
-      "args": ["run", "/path/to/telegram-mcp/src/index.ts"],
-      "env": {}
+      "args": ["run", "/path/to/telegram-mcp/src/index.ts"]
     }
   }
 }
 ```
 
 **Claude Desktop** (`claude_desktop_config.json`):
-
 ```json
 {
   "mcpServers": {
@@ -76,34 +83,36 @@ This will prompt for your `api_id`, `api_hash`, phone number, and OTP. The sessi
 
 ## Usage Examples
 
-Once connected to your MCP client, you can ask:
+Once connected to your MCP client:
 
-- *"Read the last 20 messages from the SMAUII OPS Center group, topic Alert & Insiden"*
-- *"Send a message to chat -1001234567890, topic 14: 'Server is back online'"*
-- *"List all my Telegram groups"*
-- *"What topics are available in the Pustakawan Digital group?"*
+- *"Read the last 20 messages from my team group"*
+- *"Send a daily report to the Operations channel, topic Monitoring"*
+- *"List all my Telegram groups and their IDs"*
+- *"What topics are available in the Library group?"*
+- *"Send this CSV file to the Data Reports topic"*
 
 ## Security
 
-- Session string is stored locally at `~/.config/telegram-mcp/session.txt`
-- Never commit your session file or `api_hash` to version control
-- The `.gitignore` excludes session files by default
-- Use a dedicated Telegram account for automation if possible
+- Session string stored locally at `~/.config/telegram-mcp/session.txt`
+- **Never commit** your session file or `api_hash`
+- `.gitignore` excludes session files by default
+- Consider using a dedicated Telegram account for automation
 
-## Development
+## Documentation
 
-```bash
-# Run with hot reload
-bun run dev
-
-# Type check
-bun run --check src/index.ts
-```
+| Document | Description |
+|----------|-------------|
+| [ROADMAP.md](ROADMAP.md) | Vision, v2 plans, use cases |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [DISTRIBUTION.md](DISTRIBUTION.md) | How to list your MCP server |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [SECURITY.md](SECURITY.md) | Security policy |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community standards |
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). All contributions welcome — new tools, bug fixes, documentation, translations.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)

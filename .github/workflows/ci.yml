@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: Type Check (Bun ${{ matrix.bun }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bun: ["1.0", "latest"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ matrix.bun }}
+      - run: bun install
+      - run: bun run --check src/index.ts
+      - run: bun run --check src/auth.ts
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - name: Check no hardcoded credentials
+        run: |
+          if grep -r "api_hash\s*=\s*['\"][a-f0-9]\{32\}" src/; then
+            echo "❌ Hardcoded api_hash detected"
+            exit 1
+          fi
+          echo "✅ No hardcoded credentials found"
