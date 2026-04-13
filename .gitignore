@@ -1,6 +1,6 @@
 node_modules/
 .env
 *.session
-~/.config/telegram-mcp/session.txt
 bun.lockb
 dist/
+.kiro/

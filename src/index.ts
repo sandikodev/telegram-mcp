@@ -20,7 +20,6 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
 import { z } from "zod";
-import { readFileSync, existsSync } from "fs";
 import { loadConfig } from "./config.js";
 import { BotApiClient } from "./botapi.js";
 
@@ -30,9 +29,6 @@ import { BotApiClient } from "./botapi.js";
 
 const config = loadConfig();
 
-const SESSION_FILE = `${process.env.HOME}/.config/telegram-mcp/session.txt`;
-const CONFIG_FILE  = `${process.env.HOME}/.config/telegram-mcp/config.json`;
-
 let mtprotoClient: TelegramClient | null = null;
 let botApiClient: BotApiClient | null = null;
 
@@ -40,15 +36,8 @@ if (config.mode === "botapi") {
   botApiClient = new BotApiClient(config.botToken!);
   console.error(`[telegram-mcp] Bot API mode`);
 } else {
-  // MTProto — try env session first, then file
-  const sessionStr = config.session || (existsSync(SESSION_FILE) ? readFileSync(SESSION_FILE, "utf-8").trim() : "");
-  if (!sessionStr && existsSync(CONFIG_FILE)) {
-    const fileConfig = JSON.parse(readFileSync(CONFIG_FILE, "utf-8")) as { apiId: number; apiHash: string };
-    config.apiId = config.apiId ?? fileConfig.apiId;
-    config.apiHash = config.apiHash ?? fileConfig.apiHash;
-  }
   mtprotoClient = new TelegramClient(
-    new StringSession(sessionStr),
+    new StringSession(config.session ?? ""),
     config.apiId!,
     config.apiHash!,
     { connectionRetries: 3 }

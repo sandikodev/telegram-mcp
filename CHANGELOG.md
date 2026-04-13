@@ -9,11 +9,26 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ## [Unreleased]
 
 ### Planned
-- Env-based config (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_SESSION`)
-- Bot API mode (fetch-based, zero native deps, edge-ready)
-- Dockerfile + Docker Hub publish
-- npm publish (`npx telegram-mcp`)
 - HTTP transport option
+- Cloudflare Workers support (Bot API mode)
+- `telegram_search_messages` tool
+
+---
+
+## [1.1.0] — 2026-04-14
+
+### Added
+- `TELEGRAM_SESSION` env var — session string via env, no file dependency (Docker-friendly)
+- `Dockerfile` — multi-stage Alpine image (`oven/bun:1-alpine`)
+- `.env.example` — template for all env vars
+- `bin/telegram-mcp.js` — `npx telegram-mcp` support
+- npm publish setup (`bin`, `files`, `keywords`, `repository` in package.json)
+
+### Changed
+- Session loading logic consolidated in `config.ts` (removed duplication from `index.ts`)
+- Session priority: `TELEGRAM_SESSION` env → `~/.config/telegram-mcp/session.txt` → empty
+- Removed unused `hono` dependency
+- Bumped version to 1.1.0
 
 ---
 
