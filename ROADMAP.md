@@ -211,3 +211,114 @@ services:
 - MTProto session bisa di-serialize ke string dan disimpan di env var
 - Untuk orchestration, session string di-inject via `TELEGRAM_SESSION` env
 - Tidak perlu interactive auth di production — session di-generate sekali di dev
+
+---
+
+## Inspirasi & Referensi
+
+### chigwell/telegram-mcp
+Repo yang paling lengkap fiturnya saat ini — tapi ditulis dalam Python.
+Fitur yang menginspirasi:
+- Paginated message reading
+- Dialog management lengkap
+- Read status tracking
+- Structured message retrieval
+
+Kelemahan: Python runtime, tidak edge-ready, tidak ada Docker support, tidak ada env-based config.
+
+**Misi kita:** Bawa semua fitur itu ke Bun/TypeScript yang edge-ready.
+
+---
+
+## Visi Jangka Panjang — "The Universal Telegram MCP"
+
+Bayangkan satu codebase yang bisa di-deploy di mana saja dan dipakai untuk apa saja:
+
+### Use Cases yang Mungkin
+
+**Financial & Trading**
+```
+AI agent + telegram-mcp + market data MCP
+→ Watcher pasar modal/saham real-time
+→ Alert forex/crypto non-stop di edge
+→ Bot sinyal trading yang kirim ke grup Telegram
+→ Portfolio tracker yang update setiap detik
+```
+
+**DevOps & Monitoring**
+```
+AI agent + telegram-mcp + server monitoring MCP
+→ Alert insiden langsung ke grup ops
+→ Auto-report deployment status
+→ Log anomaly detection → Telegram notification
+```
+
+**Education & Library (use case kita sekarang)**
+```
+AI agent + telegram-mcp + SLiMS MCP
+→ Laporan audit data perpustakaan otomatis
+→ Notifikasi overdue ke grup pustakawan
+→ Tiket tindak lanjut terstruktur
+```
+
+**E-commerce & Business**
+```
+AI agent + telegram-mcp + order management MCP
+→ Notifikasi order real-time ke grup sales
+→ Customer support via Telegram
+→ Inventory alert otomatis
+```
+
+### Kenapa Ini Bisa Terjadi dengan Arsitektur Kita
+
+```
+Simple setup (Bot API mode):
+  TELEGRAM_BOT_TOKEN=... → langsung jalan, zero config
+
+Edge deployment (CF Workers):
+  Bot API mode → pure fetch() → jalan di edge, latency <10ms
+
+Full power (MTProto mode):
+  TELEGRAM_API_ID + TELEGRAM_API_HASH → akses penuh, history, topics
+
+Orchestration (Docker/k8s):
+  docker run -e TELEGRAM_BOT_TOKEN=... sandikodev/telegram-mcp
+  → scale horizontal, deploy di mana saja
+```
+
+### Prinsip Desain
+
+> **"Simple by default, powerful when needed."**
+
+- User biasa: satu env var, langsung jalan
+- Developer: pilih mode, konfigurasi sesuai kebutuhan
+- Enterprise: Docker, k8s, edge, semua tersedia
+- Tidak ada yang dipaksa pakai fitur yang tidak mereka butuhkan
+
+### Kenapa Bun/TypeScript adalah Pilihan Tepat
+
+- **Satu bahasa** untuk semua target: local, Docker, edge, serverless
+- **Startup <10ms** — kritis untuk MCP stdio dan edge functions
+- **Native TypeScript** — tidak perlu build step, langsung run
+- **Bun.serve()** — HTTP server built-in untuk HTTP transport
+- **Web APIs** — `fetch`, `WebSocket`, `crypto` — semua ada, edge-compatible
+- **Bundle ke single file** — `bun build --compile` → satu binary, zero deps
+
+### Kontribusi yang Diharapkan dari Komunitas
+
+Karena ini open source dan satu codebase:
+- Tambah tool baru tanpa break existing tools
+- Tambah mode baru (misal: Telegram Premium features)
+- Tambah transport baru (HTTP, WebSocket, SSE)
+- Integrasi dengan MCP server lain (composable)
+- Adapter untuk platform baru (Deno, CF Workers, Bun edge)
+
+---
+
+## Penutup
+
+Proyek ini bukan sekadar "another Telegram MCP server."
+
+Ini adalah fondasi untuk ekosistem AI agent yang bisa berkomunikasi via Telegram — dari perpustakaan sekolah di Yogyakarta sampai trading desk di Wall Street, dari monitoring server sederhana sampai sistem alert finansial real-time di edge.
+
+Semua dari satu codebase. Semua maintainable bersama. Semua dengan prinsip yang sama: **simple by default, powerful when needed.**
