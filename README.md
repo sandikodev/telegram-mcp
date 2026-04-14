@@ -54,6 +54,54 @@ AI agent + telegram-mcp + [any other MCP server]
 
 ---
 
+## How It Works
+
+```mermaid
+graph LR
+    A[🤖 AI Agent<br/>Claude / Kiro / Cursor] -->|MCP protocol| B[telegram-mcp]
+
+    B -->|stdio| C[Local / Docker]
+    B -->|HTTP| D[Cloudflare Workers]
+
+    C --> E{Mode}
+    D --> F[Bot API only]
+
+    E -->|TELEGRAM_API_ID<br/>TELEGRAM_API_HASH| G[MTProto<br/>Full access]
+    E -->|TELEGRAM_BOT_TOKEN| H[Bot API<br/>Zero deps]
+
+    G --> I[📨 Telegram]
+    H --> I
+    F --> I
+```
+
+---
+
+## Dual Mode
+
+```mermaid
+graph TD
+    ENV[Environment Variables] --> AUTO{Auto-detect}
+
+    AUTO -->|API_ID + API_HASH| MTPROTO[MTProto Mode]
+    AUTO -->|BOT_TOKEN| BOTAPI[Bot API Mode]
+
+    MTPROTO --> T1[get_messages ✅ full history]
+    MTPROTO --> T2[send_message ✅]
+    MTPROTO --> T3[send_document ✅]
+    MTPROTO --> T4[get_dialogs ✅]
+    MTPROTO --> T5[get_topics ✅]
+    MTPROTO --> T6[search_messages ✅]
+    MTPROTO --> T7[get_chat_info ✅]
+
+    BOTAPI --> B1[get_messages ⚠️ recent only]
+    BOTAPI --> B2[send_message ✅]
+    BOTAPI --> B3[send_document ✅]
+    BOTAPI --> B4[get_dialogs ❌]
+    BOTAPI --> B5[get_topics ❌]
+```
+
+---
+
 ## Tools
 
 | Tool | Description | MTProto | Bot API | Edge |
@@ -82,6 +130,21 @@ AI agent + telegram-mcp + [any other MCP server]
 ---
 
 ## Quick Start
+
+```mermaid
+graph LR
+    A[Pick your setup] --> B[MTProto\nfull access]
+    A --> C[Bot API\nzero setup]
+    A --> D[Docker\ncontainerized]
+    A --> E[npx\nzero install]
+    A --> F[CF Workers\nedge / serverless]
+
+    B --> G[bun run auth\none-time]
+    C --> H[bot token only\nfrom @BotFather]
+    D --> I[docker run -e\nBOT_TOKEN=...]
+    E --> J[npx -y telegram-mcp]
+    F --> K[wrangler deploy]
+```
 
 ### Option A — MTProto mode (full access)
 
