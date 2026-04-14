@@ -13,6 +13,25 @@ services:
       timeout: 3s
       retries: 10
 
+  worker:
+    image: oven/bun:1-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: bun run src/worker.ts
+    environment:
+      TELEGRAM_BOT_TOKEN: "test:mocktoken"
+      TELEGRAM_API_BASE: "http://mock-botapi:8080"
+      PORT: "8787"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8787/"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      mock-botapi:
+        condition: service_healthy
+
   test-runner:
     image: oven/bun:1-alpine
     working_dir: /app
@@ -25,6 +44,9 @@ services:
       MCP_BIN: "bun"
       MCP_ARGS: "run src/index.ts"
       MOCK_BOTAPI_URL: "http://mock-botapi:8080"
+      WORKER_URL: "http://worker:8787"
     depends_on:
       mock-botapi:
+        condition: service_healthy
+      worker:
         condition: service_healthy

@@ -1,0 +1,7 @@
+name = "telegram-mcp"
+main = "src/worker.ts"
+compatibility_date = "2025-04-14"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# TELEGRAM_BOT_TOKEN — set via: wrangler secret put TELEGRAM_BOT_TOKEN

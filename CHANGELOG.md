@@ -8,10 +8,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
-### Planned
-- HTTP transport option
-- Cloudflare Workers support (Bot API mode)
-
 ---
 
 ## [2.0.0] — 2026-04-14
@@ -19,10 +15,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Added
 - `telegram_search_messages` — search messages by keyword in any chat (MTProto only)
 - `telegram_get_chat_info` — get metadata of a chat/group/channel (id, title, username, type, members, description)
+- `src/worker.ts` — Cloudflare Workers entry point (Bot API mode, HTTP transport)
+- `wrangler.toml` — CF Workers deploy config
+- HTTP transport via `WebStandardStreamableHTTPServerTransport` (Web Standard APIs, edge-compatible)
+- Worker exposes 3 tools: `get_messages`, `send_message`, `send_document`
+- `docker-compose.test.yml` — added `worker` service for HTTP transport integration testing
+- `tests/runner.ts` — added worker HTTP transport test assertions
 
 ### Changed
-- Total tools: 5 → 7
-- Bumped version to 2.0.0
+- `BotApiClient` constructor accepts optional `apiBase` parameter (for testing/edge override)
+- Total tools (stdio): 5 → 7
+- Deploy: `bun run deploy` → `wrangler deploy`
 
 ---
 

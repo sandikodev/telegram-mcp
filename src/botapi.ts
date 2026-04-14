@@ -6,9 +6,9 @@
 export class BotApiClient {
   private base: string;
 
-  constructor(private token: string) {
-    const apiBase = process.env.TELEGRAM_API_BASE ?? "https://api.telegram.org";
-    this.base = `${apiBase}/bot${token}`;
+  constructor(private token: string, apiBase?: string) {
+    const base = apiBase ?? process.env.TELEGRAM_API_BASE ?? "https://api.telegram.org";
+    this.base = `${base}/bot${token}`;
   }
 
   private async call(method: string, body: Record<string, unknown>): Promise<unknown> {

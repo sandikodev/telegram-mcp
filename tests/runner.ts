@@ -9,6 +9,7 @@ import { spawn } from "child_process";
 const MCP_BIN = process.env.MCP_BIN ?? "bun";
 const MCP_ARGS = (process.env.MCP_ARGS ?? "run src/index.ts").split(" ");
 const MOCK_URL = process.env.MOCK_BOTAPI_URL ?? "http://localhost:8080";
+const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8787";
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN ?? "test:token";
 
 let passed = 0;
@@ -184,6 +185,38 @@ async function run() {
 
   // ── Done ─────────────────────────────────────────────────────────────────
   mcp.kill();
+
+  // ── Worker HTTP transport tests ───────────────────────────────────────────
+  console.log("\n🌐 Worker HTTP transport");
+
+  const workerListRes = await fetch(`${WORKER_URL}/mcp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }),
+  });
+  assert("worker responds 200", workerListRes.status === 200, workerListRes.status);
+
+  const workerBody = await workerListRes.json() as { result?: { tools: { name: string }[] } };
+  const workerTools = workerBody.result?.tools?.map((t) => t.name) ?? [];
+  assert("worker exposes 3 Bot API tools", workerTools.length === 3, workerTools);
+  assert("worker has send_message", workerTools.includes("telegram_send_message"));
+  assert("worker has get_messages", workerTools.includes("telegram_get_messages"));
+  assert("worker has send_document", workerTools.includes("telegram_send_document"));
+
+  await clearSent();
+  const workerSendRes = await fetch(`${WORKER_URL}/mcp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0", id: 2, method: "tools/call",
+      params: { name: "telegram_send_message", arguments: { chat_id: "-100123", text: "from worker" } },
+    }),
+  });
+  const workerSendBody = await workerSendRes.json() as { result?: { isError?: boolean } };
+  assert("worker send_message no error", !workerSendBody.result?.isError, workerSendBody.result);
+  const workerSent = await getSent();
+  assert("worker called mock sendMessage", workerSent.some((s) => s.method === "sendMessage"));
+
   console.log(`\n${"─".repeat(40)}`);
   console.log(`Results: ${passed} passed, ${failed} failed`);
   process.exit(failed > 0 ? 1 : 0);
