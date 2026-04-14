@@ -198,10 +198,9 @@ async function run() {
 
   const workerBody = await workerListRes.json() as { result?: { tools: { name: string }[] } };
   const workerTools = workerBody.result?.tools?.map((t) => t.name) ?? [];
-  assert("worker exposes 3 Bot API tools", workerTools.length === 3, workerTools);
+  assert("worker exposes 2 Bot API tools", workerTools.length === 2, workerTools);
   assert("worker has send_message", workerTools.includes("telegram_send_message"));
   assert("worker has get_messages", workerTools.includes("telegram_get_messages"));
-  assert("worker has send_document", workerTools.includes("telegram_send_document"));
 
   await clearSent();
   const workerSendRes = await fetch(`${WORKER_URL}/mcp`, {

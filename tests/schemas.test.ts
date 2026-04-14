@@ -1,38 +1,8 @@
 import { describe, it, expect } from "bun:test";
-import { z } from "zod";
-
-// Mirror schemas from index.ts — kept in sync manually
-// If these fail, update index.ts schemas accordingly
-
-const GetMessagesSchema = z.object({
-  chat_id: z.union([z.string(), z.number()]),
-  topic_id: z.number().optional(),
-  limit: z.number().min(1).max(100).default(20),
-});
-
-const SendMessageSchema = z.object({
-  chat_id: z.union([z.string(), z.number()]),
-  topic_id: z.number().optional(),
-  text: z.string().min(1).max(4096),
-  parse_mode: z.enum(["markdown", "html"]).optional().default("markdown"),
-});
-
-const SendDocumentSchema = z.object({
-  chat_id: z.union([z.string(), z.number()]),
-  topic_id: z.number().optional(),
-  file_path: z.string(),
-  caption: z.string().optional(),
-});
-
-const SearchMessagesSchema = z.object({
-  chat_id: z.union([z.string(), z.number()]),
-  query:   z.string().min(1),
-  limit:   z.number().min(1).max(100).default(20),
-});
-
-const GetChatInfoSchema = z.object({
-  chat_id: z.union([z.string(), z.number()]),
-});
+import {
+  GetMessagesSchema, SendMessageSchema, SendDocumentSchema,
+  SearchMessagesSchema, GetChatInfoSchema,
+} from "../src/schemas";
 
 describe("tool schemas", () => {
   describe("GetMessagesSchema", () => {

@@ -1,6 +1,5 @@
 /**
  * Bot API mode — pure fetch(), zero native deps, edge-ready.
- * Tools available: send_message, send_document, get_messages (recent only)
  */
 
 export class BotApiClient {
@@ -32,9 +31,11 @@ export class BotApiClient {
   }
 
   async sendDocument(chatId: string | number, filePath: string, caption?: string, threadId?: number) {
+    // Read file via Bun (stdio/local only — not available in CF Workers)
+    const file = Bun.file(filePath);
     const form = new FormData();
     form.append("chat_id", String(chatId));
-    form.append("document", Bun.file(filePath));
+    form.append("document", new Blob([await file.arrayBuffer()], { type: file.type }), filePath.split("/").pop());
     if (caption) form.append("caption", caption);
     if (threadId) form.append("message_thread_id", String(threadId));
 
@@ -49,15 +50,11 @@ export class BotApiClient {
       message?: { message_id: number; date: number; from?: { username?: string; first_name?: string }; text?: string; document?: unknown };
     }>;
     return result.map(u => ({
-      id: u.message?.message_id ?? 0,
-      date: new Date((u.message?.date ?? 0) * 1000).toISOString(),
-      from: u.message?.from?.username ?? u.message?.from?.first_name ?? "unknown",
-      text: u.message?.text ?? "",
+      id:        u.message?.message_id ?? 0,
+      date:      new Date((u.message?.date ?? 0) * 1000).toISOString(),
+      from:      u.message?.from?.username ?? u.message?.from?.first_name ?? "unknown",
+      text:      u.message?.text ?? "",
       has_media: !!u.message?.document,
     }));
-  }
-
-  async getMe() {
-    return this.call("getMe", {});
   }
 }
