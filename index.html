@@ -330,51 +330,95 @@
 
 <!-- STATS -->
 <div class="stats">
-  <div class="stat"><div class="num">5</div><div class="label">MCP Tools</div></div>
-  <div class="stat"><div class="num">∞</div><div class="label">Message History</div></div>
-  <div class="stat"><div class="num">0</div><div class="label">Bot API Limits</div></div>
+  <div class="stat"><div class="num">7</div><div class="label">MCP Tools</div></div>
+  <div class="stat"><div class="num">2</div><div class="label">Transport Modes</div></div>
+  <div class="stat"><div class="num">5</div><div class="label">Deploy Targets</div></div>
 </div>
 
 <!-- TERMINAL -->
 <section class="terminal-section" id="setup">
+  <div style="max-width:860px;margin:0 auto 1.5rem;padding:0 2rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+    <button onclick="showTab('mtproto')" id="tab-mtproto" style="background:var(--accent);color:#fff;border:none;padding:0.4rem 1rem;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit;">MTProto (full access)</button>
+    <button onclick="showTab('botapi')" id="tab-botapi" style="background:var(--surface);color:var(--muted);border:1px solid var(--border);padding:0.4rem 1rem;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit;">Bot API (zero setup)</button>
+    <button onclick="showTab('edge')" id="tab-edge" style="background:var(--surface);color:var(--muted);border:1px solid var(--border);padding:0.4rem 1rem;border-radius:6px;font-size:0.82rem;cursor:pointer;font-family:inherit;">Edge / CF Workers</button>
+  </div>
   <div class="terminal">
     <div class="terminal-bar">
       <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
-      <div class="terminal-title">bash — telegram-mcp setup</div>
+      <div class="terminal-title" id="terminal-title">bash — MTProto setup</div>
     </div>
-    <pre><span class="t-comment"># Clone and install</span>
-<span class="t-prompt">$</span> <span class="t-cmd">git clone https://github.com/sandikodev/telegram-mcp.git</span>
-<span class="t-prompt">$</span> <span class="t-cmd">cd telegram-mcp && bun install</span>
+    <pre id="tab-content-mtproto"><span class="t-comment"># Clone and install</span>
+<span class="t-prompt">$</span> <span class="t-cmd">git clone https://github.com/sandikodev/telegram-mcp.git && cd telegram-mcp</span>
+<span class="t-prompt">$</span> <span class="t-cmd">bun install</span>
 
-<span class="t-comment"># One-time authentication</span>
+<span class="t-comment"># One-time authentication (saves session to ~/.config/telegram-mcp/session.txt)</span>
 <span class="t-prompt">$</span> <span class="t-cmd">bun run auth</span>
-<span class="t-out">API ID: ••••••••</span>
-<span class="t-out">API Hash: ••••••••••••••••••••••••••••••••</span>
-<span class="t-out">Phone: +62••••••••••</span>
-<span class="t-out">OTP: ••••••</span>
-<span class="t-success">✅ Signed in as Sandikodev. Session saved.</span>
+<span class="t-out">API ID: ••••••••  |  API Hash: ••••••••••••••••</span>
+<span class="t-out">Phone: +62••••••••••  |  OTP: ••••••</span>
+<span class="t-success">✅ Session saved.</span>
 
-<span class="t-comment"># Add to ~/.kiro/settings/mcp.json</span>
+<span class="t-comment"># mcp.json — full access: history, dialogs, topics, search</span>
 {
-  <span class="t-key">"mcpServers"</span>: {
-    <span class="t-key">"telegram"</span>: {
-      <span class="t-key">"command"</span>: <span class="t-str">"bun"</span>,
-      <span class="t-key">"args"</span>: [<span class="t-str">"run"</span>, <span class="t-str">"/path/to/telegram-mcp/src/index.ts"</span>]
-    }
-  }
+  <span class="t-key">"mcpServers"</span>: { <span class="t-key">"telegram"</span>: {
+    <span class="t-key">"command"</span>: <span class="t-str">"bun"</span>, <span class="t-key">"args"</span>: [<span class="t-str">"run"</span>, <span class="t-str">"/path/to/telegram-mcp/src/index.ts"</span>],
+    <span class="t-key">"env"</span>: { <span class="t-key">"TELEGRAM_API_ID"</span>: <span class="t-str">"..."</span>, <span class="t-key">"TELEGRAM_API_HASH"</span>: <span class="t-str">"..."</span> }
+  }}
+}</pre>
+    <pre id="tab-content-botapi" style="display:none"><span class="t-comment"># No auth script needed — just a bot token from @BotFather</span>
+<span class="t-prompt">$</span> <span class="t-cmd">git clone https://github.com/sandikodev/telegram-mcp.git && cd telegram-mcp</span>
+<span class="t-prompt">$</span> <span class="t-cmd">bun install</span>
+
+<span class="t-comment"># mcp.json — zero setup, works immediately</span>
+{
+  <span class="t-key">"mcpServers"</span>: { <span class="t-key">"telegram"</span>: {
+    <span class="t-key">"command"</span>: <span class="t-str">"bun"</span>, <span class="t-key">"args"</span>: [<span class="t-str">"run"</span>, <span class="t-str">"/path/to/telegram-mcp/src/index.ts"</span>],
+    <span class="t-key">"env"</span>: { <span class="t-key">"TELEGRAM_BOT_TOKEN"</span>: <span class="t-str">"your_bot_token"</span> }
+  }}
 }
 
-<span class="t-comment"># Now ask your AI agent:</span>
-<span class="t-out">"Read the last 20 messages from SMAUII OPS Center, topic Alert"</span>
-<span class="t-out">"Send a report to Pustakawan Digital group, topic Laporan Data"</span></pre>
+<span class="t-comment"># Or via npx — zero install</span>
+{
+  <span class="t-key">"mcpServers"</span>: { <span class="t-key">"telegram"</span>: {
+    <span class="t-key">"command"</span>: <span class="t-str">"npx"</span>, <span class="t-key">"args"</span>: [<span class="t-str">"-y"</span>, <span class="t-str">"telegram-mcp"</span>],
+    <span class="t-key">"env"</span>: { <span class="t-key">"TELEGRAM_BOT_TOKEN"</span>: <span class="t-str">"your_bot_token"</span> }
+  }}
+}</pre>
+    <pre id="tab-content-edge" style="display:none"><span class="t-comment"># Deploy to Cloudflare Workers — runs on the edge, zero cold start</span>
+<span class="t-prompt">$</span> <span class="t-cmd">git clone https://github.com/sandikodev/telegram-mcp.git && cd telegram-mcp</span>
+<span class="t-prompt">$</span> <span class="t-cmd">bun install</span>
+<span class="t-prompt">$</span> <span class="t-cmd">wrangler secret put TELEGRAM_BOT_TOKEN</span>
+<span class="t-out">Enter a secret value: ••••••••••••••••••••••••••••••••••••••••••••••</span>
+<span class="t-success">✅ Success! Uploaded secret TELEGRAM_BOT_TOKEN</span>
+<span class="t-prompt">$</span> <span class="t-cmd">wrangler deploy</span>
+<span class="t-success">✅ Deployed to https://telegram-mcp.your-subdomain.workers.dev</span>
+
+<span class="t-comment"># mcp.json — HTTP transport, no local process needed</span>
+{
+  <span class="t-key">"mcpServers"</span>: { <span class="t-key">"telegram"</span>: {
+    <span class="t-key">"url"</span>: <span class="t-str">"https://telegram-mcp.your-subdomain.workers.dev/mcp"</span>
+  }}
+}</pre>
   </div>
 </section>
+<script>
+function showTab(tab) {
+  ['mtproto','botapi','edge'].forEach(t => {
+    document.getElementById('tab-content-'+t).style.display = t===tab?'block':'none';
+    const btn = document.getElementById('tab-'+t);
+    btn.style.background = t===tab?'var(--accent)':'var(--surface)';
+    btn.style.color = t===tab?'#fff':'var(--muted)';
+    btn.style.border = t===tab?'none':'1px solid var(--border)';
+  });
+  const titles = {mtproto:'bash — MTProto setup', botapi:'bash — Bot API setup', edge:'bash — Cloudflare Workers deploy'};
+  document.getElementById('terminal-title').textContent = titles[tab];
+}
+</script>
 
 <!-- TOOLS -->
 <section class="section" id="tools">
   <div class="section-header">
-    <h2>5 Powerful Tools</h2>
-    <p>Everything your AI agent needs to work with Telegram — validated with Zod</p>
+    <h2>7 Powerful Tools</h2>
+    <p>Everything your AI agent needs to work with Telegram — all inputs validated with Zod, 15s timeout on every call</p>
   </div>
   <div class="tools-grid">
     <div class="tool-card">
@@ -387,7 +431,7 @@
       <div class="tool-icon">✉️</div>
       <div class="tool-name">telegram_send_message</div>
       <h3>Send Messages</h3>
-      <p>Send Markdown or HTML formatted messages to any chat or specific forum topic thread.</p>
+      <p>Send Markdown or HTML formatted messages to any chat or specific forum topic thread. Max 4096 chars.</p>
     </div>
     <div class="tool-card">
       <div class="tool-icon">📎</div>
@@ -407,6 +451,18 @@
       <h3>List Forum Topics</h3>
       <p>Get all topics in a supergroup forum — perfect for organized team workspaces.</p>
     </div>
+    <div class="tool-card">
+      <div class="tool-icon">🔍</div>
+      <div class="tool-name">telegram_search_messages</div>
+      <h3>Search Messages</h3>
+      <p>Search messages by keyword within any chat. Returns up to 100 matching results with full context.</p>
+    </div>
+    <div class="tool-card">
+      <div class="tool-icon">ℹ️</div>
+      <div class="tool-name">telegram_get_chat_info</div>
+      <h3>Get Chat Info</h3>
+      <p>Fetch metadata of any chat, group, or channel — title, username, type, member count, description.</p>
+    </div>
   </div>
 </section>
 
@@ -414,7 +470,7 @@
 <section class="section" id="clients">
   <div class="section-header">
     <h2>Works with Any MCP Client</h2>
-    <p>One server, multiple AI clients</p>
+    <p>stdio transport (local/Docker) or HTTP transport (Cloudflare Workers)</p>
   </div>
   <div class="clients-grid">
     <div class="client-card">
@@ -434,8 +490,12 @@
       <div><div class="client-name">Windsurf</div><div class="client-sub">Codeium</div></div>
     </div>
     <div class="client-card">
-      <div class="client-icon">🔌</div>
-      <div><div class="client-name">Any MCP Client</div><div class="client-sub">stdio transport</div></div>
+      <div class="client-icon">🐳</div>
+      <div><div class="client-name">Docker</div><div class="client-sub">containerized stdio</div></div>
+    </div>
+    <div class="client-card">
+      <div class="client-icon">☁️</div>
+      <div><div class="client-name">CF Workers</div><div class="client-sub">HTTP transport</div></div>
     </div>
   </div>
 </section>
@@ -443,8 +503,8 @@
 <!-- WHY -->
 <section class="section">
   <div class="section-header">
-    <h2>Why Not Just Use the Bot API?</h2>
-    <p>The Bot API is great for bots. MTProto is for everything else.</p>
+    <h2>Why telegram-mcp?</h2>
+    <p>Built for production. Simple by default, powerful when needed.</p>
   </div>
   <div class="why-grid">
     <div class="why-card">
@@ -465,17 +525,27 @@
     <div class="why-card">
       <div class="why-icon">⚡</div>
       <h3>Bun Native</h3>
-      <p>TypeScript first, fast startup, no build step needed.</p>
+      <p>~10ms startup. TypeScript first, no build step, no transpilation.</p>
     </div>
     <div class="why-card">
       <div class="why-icon">🛡️</div>
       <h3>Zod Validated</h3>
-      <p>All tool inputs validated at runtime — no silent failures.</p>
+      <p>All tool inputs validated at runtime — no silent failures, clear error messages.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">⏱️</div>
+      <h3>Timeout Safe</h3>
+      <p>Every API call has a 15s timeout — server never hangs, always responds.</p>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">🌍</div>
+      <h3>Deploy Anywhere</h3>
+      <p>Local, Docker, npx, or Cloudflare Workers — one codebase, five deployment targets.</p>
     </div>
     <div class="why-card">
       <div class="why-icon">🔒</div>
-      <h3>Local Session</h3>
-      <p>Session stored locally — never leaves your machine.</p>
+      <h3>Secrets Safe</h3>
+      <p>Session stored locally or via env var — never hardcoded, never committed.</p>
     </div>
   </div>
 </section>
