@@ -13,7 +13,22 @@ import { BotApiClient } from "./botapi.js";
 import {
   GetMessagesSchema, SendMessageSchema, SendDocumentSchema,
   GetDialogsSchema, GetTopicsSchema, SearchMessagesSchema, GetChatInfoSchema,
+  type Message,
 } from "./schemas.js";
+
+const TIMEOUT_MS = 15_000;
+const withTimeout = <T>(p: Promise<T>) => Promise.race([
+  p,
+  new Promise<never>((_, r) => setTimeout(() => r(new Error("Telegram API timeout after 15s")), TIMEOUT_MS)),
+]);
+
+const shapeMessage = (m: any): Message => ({
+  id:        m.id,
+  date:      new Date((m.date ?? 0) * 1000).toISOString(),
+  from:      m.sender?.username ?? m.sender?.firstName ?? "unknown",
+  text:      m.text ?? "",
+  has_media: !!m.media,
+});
 
 const config = loadConfig();
 
@@ -30,6 +45,7 @@ if (config.mode === "botapi") {
     config.apiHash!,
     { connectionRetries: 3 }
   );
+  await mtprotoClient.connect();
   console.error("[telegram-mcp] MTProto mode");
 }
 
@@ -59,7 +75,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "telegram_send_message",
-      description: "Send a message to a Telegram chat or forum topic",
+      description: "Send a message to a Telegram chat or forum topic. Max 4096 characters. Supports markdown and html formatting.",
       inputSchema: {
         type: "object",
         properties: {
@@ -73,7 +89,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: "telegram_send_document",
-      description: "Send a local file to a Telegram chat or forum topic",
+      description: "Send a local file to a Telegram chat or forum topic. Provide absolute path to file on the server.",
       inputSchema: {
         type: "object",
         properties: {
@@ -161,33 +177,26 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     }
 
     const client = mtprotoClient!;
-    await client.connect();
 
     switch (name) {
       case "telegram_get_messages": {
         const { chat_id, topic_id, limit } = GetMessagesSchema.parse(args);
-        const msgs = await client.getMessages(chat_id, { limit, ...(topic_id ? { replyTo: topic_id } : {}) });
-        return { content: [{ type: "text", text: JSON.stringify(msgs.map(m => ({
-          id:        m.id,
-          date:      new Date((m.date ?? 0) * 1000).toISOString(),
-          from:      (m.sender as any)?.username ?? (m.sender as any)?.firstName ?? "unknown",
-          text:      m.text ?? "",
-          has_media: !!m.media,
-        })), null, 2) }] };
+        const msgs = await withTimeout(client.getMessages(chat_id, { limit, ...(topic_id ? { replyTo: topic_id } : {}) }));
+        return { content: [{ type: "text", text: JSON.stringify(msgs.map(shapeMessage), null, 2) }] };
       }
       case "telegram_send_message": {
         const { chat_id, topic_id, text, parse_mode } = SendMessageSchema.parse(args);
-        const sent = await client.sendMessage(chat_id, { message: text, parseMode: parse_mode, ...(topic_id ? { replyTo: topic_id } : {}) });
+        const sent = await withTimeout(client.sendMessage(chat_id, { message: text, parseMode: parse_mode, ...(topic_id ? { replyTo: topic_id } : {}) }));
         return { content: [{ type: "text", text: `Sent message id=${sent.id}` }] };
       }
       case "telegram_send_document": {
         const { chat_id, topic_id, file_path, caption } = SendDocumentSchema.parse(args);
-        const sent = await client.sendFile(chat_id, { file: file_path, caption, ...(topic_id ? { replyTo: topic_id } : {}) });
+        const sent = await withTimeout(client.sendFile(chat_id, { file: file_path, caption, ...(topic_id ? { replyTo: topic_id } : {}) }));
         return { content: [{ type: "text", text: `Sent document id=${sent.id}` }] };
       }
       case "telegram_get_dialogs": {
         const { limit } = GetDialogsSchema.parse(args);
-        const dialogs = await client.getDialogs({ limit });
+        const dialogs = await withTimeout(client.getDialogs({ limit }));
         return { content: [{ type: "text", text: JSON.stringify(dialogs.map(d => ({
           id:     d.id?.toString(),
           name:   d.name,
@@ -197,29 +206,23 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       }
       case "telegram_get_topics": {
         const { chat_id } = GetTopicsSchema.parse(args);
-        const { topics } = await (client as any).invoke({
+        const { topics } = await withTimeout((client as any).invoke({
           _: "channels.getForumTopics",
-          channel: await client.getEntity(chat_id),
+          channel: await withTimeout(client.getEntity(chat_id)),
           offsetDate: 0, offsetId: 0, offsetTopic: 0, limit: 100,
-        });
+        }));
         return { content: [{ type: "text", text: JSON.stringify((topics as any[]).map(t => ({
           id: t.id, title: t.title, closed: t.closed ?? false,
         })), null, 2) }] };
       }
       case "telegram_search_messages": {
         const { chat_id, query, limit } = SearchMessagesSchema.parse(args);
-        const msgs = await client.getMessages(chat_id, { search: query, limit });
-        return { content: [{ type: "text", text: JSON.stringify(msgs.map(m => ({
-          id:        m.id,
-          date:      new Date((m.date ?? 0) * 1000).toISOString(),
-          from:      (m.sender as any)?.username ?? (m.sender as any)?.firstName ?? "unknown",
-          text:      m.text ?? "",
-          has_media: !!m.media,
-        })), null, 2) }] };
+        const msgs = await withTimeout(client.getMessages(chat_id, { search: query, limit }));
+        return { content: [{ type: "text", text: JSON.stringify(msgs.map(shapeMessage), null, 2) }] };
       }
       case "telegram_get_chat_info": {
         const { chat_id } = GetChatInfoSchema.parse(args);
-        const e = await client.getEntity(chat_id) as any;
+        const e = await withTimeout(client.getEntity(chat_id)) as any;
         return { content: [{ type: "text", text: JSON.stringify({
           id:          e.id?.toString(),
           title:       e.title ?? `${e.firstName ?? ""} ${e.lastName ?? ""}`.trim(),
@@ -233,7 +236,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         throw new Error(`Unknown tool: ${name}`);
     }
   } catch (err: any) {
-    return { content: [{ type: "text", text: `Error: ${err.message}` }], isError: true };
+    const msg = err?.message ?? "Unknown error";
+    console.error(`[telegram-mcp] tool=${name} error=${msg}`);
+    return { content: [{ type: "text", text: `Error: ${msg}` }], isError: true };
   }
 });
 

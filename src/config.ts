@@ -18,7 +18,6 @@ export interface Config {
   session?: string;
   // Bot API
   botToken?: string;
-  defaultChatId?: string;
 }
 
 const SESSION_FILE = `${process.env.HOME}/.config/telegram-mcp/session.txt`;
@@ -27,12 +26,11 @@ export function loadConfig(): Config {
   const apiId      = process.env.TELEGRAM_API_ID;
   const apiHash    = process.env.TELEGRAM_API_HASH;
   const botToken   = process.env.TELEGRAM_BOT_TOKEN;
-  const defaultChatId = process.env.TELEGRAM_CHAT_ID;
   const forcedMode = process.env.TELEGRAM_MODE as Mode | undefined;
 
   if (forcedMode === "botapi" || (!apiId && !apiHash && botToken)) {
     if (!botToken) throw new Error("TELEGRAM_BOT_TOKEN is required for Bot API mode");
-    return { mode: "botapi", botToken, defaultChatId };
+    return { mode: "botapi", botToken };
   }
 
   if (forcedMode === "mtproto" || (apiId && apiHash)) {

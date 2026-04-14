@@ -2,6 +2,19 @@
  * Bot API mode — pure fetch(), zero native deps, edge-ready.
  */
 
+import type { Message } from "./schemas.js";
+
+const TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, ms = TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Telegram API timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 export class BotApiClient {
   private base: string;
 
@@ -11,11 +24,11 @@ export class BotApiClient {
   }
 
   private async call(method: string, body: Record<string, unknown>): Promise<unknown> {
-    const res = await fetch(`${this.base}/${method}`, {
+    const res = await withTimeout(fetch(`${this.base}/${method}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-    });
+    }));
     const data = await res.json() as { ok: boolean; result?: unknown; description?: string };
     if (!data.ok) throw new Error(data.description ?? "Bot API error");
     return data.result;
@@ -39,13 +52,13 @@ export class BotApiClient {
     if (caption) form.append("caption", caption);
     if (threadId) form.append("message_thread_id", String(threadId));
 
-    const res = await fetch(`${this.base}/sendDocument`, { method: "POST", body: form });
+    const res = await withTimeout(fetch(`${this.base}/sendDocument`, { method: "POST", body: form }));
     const data = await res.json() as { ok: boolean; result?: unknown; description?: string };
     if (!data.ok) throw new Error(data.description ?? "Bot API error");
     return data.result;
   }
 
-  async getUpdates(limit = 20) {
+  async getUpdates(limit = 20): Promise<Message[]> {
     const result = await this.call("getUpdates", { limit }) as Array<{
       message?: { message_id: number; date: number; from?: { username?: string; first_name?: string }; text?: string; document?: unknown };
     }>;

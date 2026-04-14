@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+// Shared output shape for all message-returning tools (both modes)
+export interface Message {
+  id:        number;
+  date:      string; // ISO 8601
+  from:      string;
+  text:      string;
+  has_media: boolean;
+}
+
 const ChatId = z.union([z.string(), z.number()]);
 
 export const GetMessagesSchema = z.object({

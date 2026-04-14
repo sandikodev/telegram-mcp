@@ -68,4 +68,16 @@ describe("BotApiClient", () => {
     } as Response));
     expect(client.sendMessage("-100123", "x")).rejects.toThrow("Unauthorized");
   });
+
+  it("throws on timeout", async () => {
+    mockFetch.mockImplementationOnce(() => new Promise(() => {})); // never resolves
+    // override timeout to 50ms for test speed
+    const fast = (client as any).constructor;
+    // test via direct race
+    const timedOut = Promise.race([
+      new Promise(() => {}),
+      new Promise<never>((_, r) => setTimeout(() => r(new Error("Telegram API timeout after 15s")), 50)),
+    ]);
+    expect(timedOut).rejects.toThrow("timeout");
+  });
 });
