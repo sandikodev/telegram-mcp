@@ -70,22 +70,40 @@ bun run --check src/index.ts
 ```
 telegram-mcp/
 ├── src/
-│   ├── index.ts        ← MCP server entry point
-│   └── auth.ts         ← One-time authentication script
+│   ├── schemas.ts      ← Zod schemas + shared types (single source of truth)
+│   ├── config.ts       ← env detection, mode selection, session loading
+│   ├── botapi.ts       ← Bot API client (pure fetch, edge-compatible)
+│   ├── index.ts        ← stdio MCP server (MTProto + Bot API, 7 tools)
+│   ├── worker.ts       ← HTTP MCP server for Cloudflare Workers (Bot API, 2 tools)
+│   └── auth.ts         ← one-time MTProto authentication script
+├── tests/
+│   ├── config.test.ts      ← unit tests: config/mode detection
+│   ├── schemas.test.ts     ← unit tests: Zod validation
+│   ├── botapi.test.ts      ← unit tests: BotApiClient
+│   ├── runner.ts           ← integration test runner (stdio + HTTP)
+│   └── mock-botapi/
+│       └── index.ts        ← fake Telegram Bot API server (Hono)
+├── bin/
+│   └── telegram-mcp.js ← npx entry point
 ├── docs/               ← Translated documentation
 │   ├── id/README.md    ← Bahasa Indonesia
 │   ├── zh/README.md    ← 中文
 │   ├── ja/README.md    ← 日本語
 │   └── ar/README.md    ← العربية
-├── README.md           ← English (default)
-├── ROADMAP.md          ← Vision and future plans
-├── CONTRIBUTING.md     ← This file
-├── CHANGELOG.md        ← Version history
-├── SECURITY.md         ← Security policy
-├── CODE_OF_CONDUCT.md  ← Community standards
-├── DISTRIBUTION.md     ← How to list MCP servers
-├── package.json
-└── .gitignore
+├── .github/
+│   ├── workflows/ci.yml            ← typecheck + lint
+│   ├── ISSUE_TEMPLATE/             ← bug report, feature request
+│   └── pull_request_template.md
+├── Dockerfile
+├── docker-compose.test.yml ← integration test environment
+├── wrangler.toml           ← Cloudflare Workers config
+├── .env.example
+├── ARCHITECTURE.md     ← system diagrams and data flow
+├── ROADMAP.md
+├── CONTRIBUTING.md     ← this file
+├── CHANGELOG.md
+├── SECURITY.md
+└── CODE_OF_CONDUCT.md
 ```
 
 ---
@@ -94,11 +112,11 @@ telegram-mcp/
 
 ### 1. Define the Zod schema
 
-In `src/index.ts`, add a schema for your tool's input:
+In `src/schemas.ts`, add and export a schema:
 
 ```typescript
-const MyNewToolSchema = z.object({
-  chat_id: z.union([z.string(), z.number()]).describe("Chat ID or @username"),
+export const MyNewToolSchema = z.object({
+  chat_id:  ChatId,
   my_param: z.string().describe("Description of this parameter"),
 });
 ```
@@ -154,17 +172,20 @@ Add an entry under `[Unreleased]`.
 
 ## Testing
 
-Currently the project does not have automated tests. We welcome contributions that add test coverage.
-
-To manually test a tool:
-
 ```bash
-# Start the server
-bun run src/index.ts
+# Unit tests (fast, no network, runs on pre-commit)
+bun test
 
-# In another terminal, send a JSON-RPC request
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"telegram_get_dialogs","arguments":{"limit":5}}}' | bun run src/index.ts
+# Integration tests (Docker required)
+bun run test:integration
+
+# Cleanup integration test containers
+bun run test:integration:clean
 ```
+
+Unit tests cover: config mode detection, Zod schema validation, BotApiClient HTTP calls and error handling.
+
+Integration tests cover: full MCP tool flow via stdio, worker HTTP transport, mock Bot API server.
 
 ---
 

@@ -56,75 +56,126 @@ AI agent + telegram-mcp + [any other MCP server]
 
 ## Tools
 
-| Tool | Description | Mode |
-|------|-------------|------|
-| `telegram_get_messages` | Read message history from any chat or forum topic | MTProto |
-| `telegram_send_message` | Send Markdown/HTML messages to any chat or topic | Both |
-| `telegram_send_document` | Send files to any chat or topic | Both |
-| `telegram_get_dialogs` | List all chats, groups, and channels | MTProto |
-| `telegram_get_topics` | List forum topics in a supergroup | MTProto |
+| Tool | Description | MTProto | Bot API | Edge |
+|------|-------------|:-------:|:-------:|:----:|
+| `telegram_get_messages` | Read message history / recent updates | ✅ | ✅ | ✅ |
+| `telegram_send_message` | Send Markdown/HTML messages to any chat or topic | ✅ | ✅ | ✅ |
+| `telegram_send_document` | Send local files to any chat or topic | ✅ | ✅ | ❌ |
+| `telegram_get_dialogs` | List all chats, groups, and channels | ✅ | ❌ | ❌ |
+| `telegram_get_topics` | List forum topics in a supergroup | ✅ | ❌ | ❌ |
+| `telegram_search_messages` | Search messages by keyword in a chat | ✅ | ❌ | ❌ |
+| `telegram_get_chat_info` | Get metadata of a chat, group, or channel | ✅ | ❌ | ❌ |
 
-> **v2 roadmap:** Bot API mode (zero deps, edge-ready), env-based config, Docker image, `npx` support.  
-> See [ROADMAP.md](ROADMAP.md) for the full vision.
+> See [ARCHITECTURE.md](ARCHITECTURE.md) for the full tool availability matrix and system diagrams.
 
 ---
 
 ## Requirements
 
-| Component | Minimum |
-|-----------|---------|
-| [Bun](https://bun.sh) | 1.0 |
-| Telegram account | — |
-| `api_id` + `api_hash` | from [my.telegram.org](https://my.telegram.org) |
+| Component | Minimum | Required for |
+|-----------|---------|-------------|
+| [Bun](https://bun.sh) | 1.0 | All modes |
+| Telegram account | — | MTProto mode |
+| `api_id` + `api_hash` | from [my.telegram.org](https://my.telegram.org) | MTProto mode |
+| Bot token | from [@BotFather](https://t.me/BotFather) | Bot API mode |
 
 ---
 
 ## Quick Start
 
-### 1. Clone & Install
+### Option A — MTProto mode (full access)
 
 ```bash
 git clone https://github.com/sandikodev/telegram-mcp.git
 cd telegram-mcp
 bun install
+bun run auth        # one-time: saves session to ~/.config/telegram-mcp/session.txt
 ```
 
-### 2. Authenticate (one-time)
+Configure your MCP client:
 
-```bash
-bun run auth
-```
-
-You will be prompted for your `api_id`, `api_hash`, phone number, and OTP code.  
-The session string is saved to `~/.config/telegram-mcp/session.txt`.
-
-### 3. Configure your MCP client
-
-**Kiro CLI** (`~/.kiro/settings/mcp.json`):
-```json
-{
-  "mcpServers": {
-    "telegram": {
-      "command": "/path/to/.bun/bin/bun",
-      "args": ["run", "/path/to/telegram-mcp/src/index.ts"]
-    }
-  }
-}
-```
-
-**Claude Desktop** (`claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
     "telegram": {
       "command": "bun",
-      "args": ["run", "/path/to/telegram-mcp/src/index.ts"]
+      "args": ["run", "/path/to/telegram-mcp/src/index.ts"],
+      "env": {
+        "TELEGRAM_API_ID": "your_api_id",
+        "TELEGRAM_API_HASH": "your_api_hash"
+      }
     }
   }
 }
 ```
 
-**Cursor / Windsurf / any MCP client:** same pattern — `command: bun`, `args: ["run", "src/index.ts"]`.
+### Option B — Bot API mode (zero setup)
+
+No auth script needed. Just a bot token from [@BotFather](https://t.me/BotFather).
+
+```json
+{
+  "mcpServers": {
+    "telegram": {
+      "command": "bun",
+      "args": ["run", "/path/to/telegram-mcp/src/index.ts"],
+      "env": {
+        "TELEGRAM_BOT_TOKEN": "your_bot_token"
+      }
+    }
+  }
+}
+```
+
+### Option C — Docker
+
+```bash
+# Bot API mode
+docker run -e TELEGRAM_BOT_TOKEN=your_token sandikodev/telegram-mcp
+
+# MTProto mode
+docker run \
+  -e TELEGRAM_API_ID=your_id \
+  -e TELEGRAM_API_HASH=your_hash \
+  -e TELEGRAM_SESSION=your_session_string \
+  sandikodev/telegram-mcp
+```
+
+### Option D — npx (zero install)
+
+```json
+{
+  "mcpServers": {
+    "telegram": {
+      "command": "npx",
+      "args": ["-y", "telegram-mcp"],
+      "env": { "TELEGRAM_BOT_TOKEN": "your_bot_token" }
+    }
+  }
+}
+```
+
+### Option E — Cloudflare Workers (edge)
+
+```bash
+cd telegram-mcp
+wrangler secret put TELEGRAM_BOT_TOKEN
+wrangler deploy
+```
+
+Then configure your MCP client with the HTTP URL:
+
+```json
+{
+  "mcpServers": {
+    "telegram": {
+      "url": "https://telegram-mcp.your-subdomain.workers.dev/mcp"
+    }
+  }
+}
+```
+
+> **Supported clients:** Kiro CLI, Claude Desktop, Cursor, Windsurf, and any MCP-compatible client.
 
 ---
 
@@ -164,7 +215,8 @@ Once connected to your MCP client:
 
 | Document | Description |
 |----------|-------------|
-| [ROADMAP.md](ROADMAP.md) | Vision, v2 plans, use cases, design principles |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System diagrams, data flow, transport modes, tool matrix |
+| [ROADMAP.md](ROADMAP.md) | Vision, use cases, design principles |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute — setup, conventions, adding tools, translations |
 | [DISTRIBUTION.md](DISTRIBUTION.md) | How to list your MCP server on awesome lists |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |

@@ -1,6 +1,6 @@
-# Roadmap & Vision — telegram-mcp v2
+# Roadmap & Vision — telegram-mcp
 
-**Status:** Brainstorming  
+**Status:** Active development  
 **Dibuat:** 14 April 2026  
 **Author:** Sandikodev
 
@@ -173,25 +173,35 @@ services:
 - stdio transport
 - GitHub Pages landing page
 
-### v1.1 (Next)
-- [ ] Env-based config (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`)
-- [ ] Remove interactive auth — session via env var `TELEGRAM_SESSION`
-- [ ] Dockerfile + Docker Hub publish
-- [ ] `.env.example`
+### v1.1 (Done ✅)
+- [x] Env-based config (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`)
+- [x] Session via env var `TELEGRAM_SESSION` (no file dependency, Docker-friendly)
+- [x] Dockerfile + Docker Hub publish
+- [x] `.env.example`
+- [x] npm publish (`npx telegram-mcp`)
 
-### v2.0 (Future)
-- [ ] Bot API mode (fetch-based, zero deps)
-- [ ] Auto mode detection
-- [ ] HTTP transport option (untuk edge)
-- [ ] npm publish (`npx telegram-mcp`)
-- [ ] Cloudflare Workers support (Bot API mode)
-- [ ] Tool availability matrix per mode
+### v2.0 (Done ✅)
+- [x] Bot API mode (fetch-based, zero deps)
+- [x] Auto mode detection from env
+- [x] HTTP transport (`WebStandardStreamableHTTPServerTransport`)
+- [x] Cloudflare Workers support (`src/worker.ts`)
+- [x] `telegram_search_messages`
+- [x] `telegram_get_chat_info`
+- [x] Unit tests (bun:test) + Husky pre-commit
+- [x] Integration tests (Docker Compose + mock Bot API)
+- [x] `src/schemas.ts` — single source of truth for Zod schemas
+- [x] Unified `Message` output shape across modes
+- [x] 15s timeout on all API calls
+- [x] MTProto connect once at startup
+- [x] Structured error logging
 
-### v2.x (Community)
-- [ ] Webhook support
-- [ ] Message formatting helpers
+### v2.x (Next)
+- [ ] Webhook support (receive messages, not just send)
+- [ ] `telegram_forward_message` — forward between chats/topics
+- [ ] `telegram_get_message` — fetch single message by ID
+- [ ] `telegram_get_chat_info` via Bot API (`getChat` endpoint)
 - [ ] Rate limiting built-in
-- [ ] Metrics/observability
+- [ ] `TELEGRAM_SESSION` auto-save after auth (no manual copy)
 
 ---
 
